@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>區權會議案表決票產生器</title>
+    <style>
+        :root {
+            --print-color: #000;
+        }
+        body {
+            font-family: "Microsoft JhengHei", sans-serif;
+            padding: 20px;
+            background-color: #f0f2f5;
+        }
+        .setup-panel {
+            max-width: 800px;
+            margin: 0 auto 30px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .input-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .proposal-edit {
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+
+        /* 選票樣式 */
+        #ballot-paper {
+            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border: 2px solid #000;
+            position: relative;
+        }
+        .ballot-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 20px;
+        }
+        .house-info {
+            font-size: 18px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+        }
+        .proposal-item {
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #000;
+        }
+        .proposal-name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .proposal-content {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        .vote-options {
+            display: flex;
+            gap: 50px;
+            margin-top: 15px;
+        }
+        .option-box {
+            border: 2px solid #000;
+            width: 100px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .stamp-hint {
+            font-size: 16px;
+            align-self: center;
+        }
+        .ballot-footer {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .verify-info {
+            font-size: 14px;
+            font-family: monospace;
+        }
+        .qr-code img {
+            width: 120px;
+            height: 120px;
+        }
+
+        /* 列印設定 */
+        @media print {
+            .setup-panel, button { display: none !important; }
+            body { background: white; padding: 0; }
+            #ballot-paper { display: block !important; border: 2px solid #000; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="setup-panel">
+    <h2 style="text-align: center;">區權會議案表決票產生器</h2>
+    
+    <div class="input-row">
+        <div class="input-group">
+            <label>1. 戶號：</label>
+            <input type="text" id="in_house" value="A1-5F" placeholder="例如：A1-5F">
+        </div>
+        <div class="input-group">
+            <label>2. 密碼(16位)：</label>
+            <input type="text" id="in_pwd" maxlength="16" value="coconut30050city" placeholder="coconut30050city">
+        </div>
+    </div>
+
+    <div id="edit-area">
+        <!-- 議案1 -->
+        <div class="proposal-edit">
+            <strong>議案一</strong>
+            <input type="text" id="in_p1_t" value="導入台電代收與大公按戶分攤之永續社區案">
+            <textarea id="in_p1_c" rows="2">是否同意授權管委會申請台電代收大公電費？</textarea>
+        </div>
+        <!-- 議案2 -->
+        <div class="proposal-edit">
+            <strong>議案二</strong>
+            <input type="text" id="in_p2_t" value="社區各項固定支出調漲限制案">
+            <textarea id="in_p2_c" rows="2">是否同意社區各項固定支出之合約簽訂，續約金額較前一期合約增加百分之十(含)以上者，應提經區分所有權人會議決議通過後始得簽約？</textarea>
+        </div>
+        <!-- 議案3 -->
+        <div class="proposal-edit">
+            <strong>議案三</strong>
+            <input type="text" id="in_p3_t" value="重大修繕或改良之工程金額調整方案">
+            <textarea id="in_p3_c" rows="2">是否同意調整重大修繕或改良之工程金額？</textarea>
+        </div>
+    </div>
+
+    <button onclick="generateBallot()">產生並預覽選票</button>
+</div>
+
+<!-- 選票本體 -->
+<div id="ballot-paper">
+    <div class="ballot-header">
+        <div class="ballot-title"> 椰城區分所有權人會議 議案表決票</div>
+        <div class="house-info">持分比例：<span id="out_house"></span></div>
+    </div>
+
+    <div id="out_proposals">
+        <!-- JS 動態填入 -->
+    </div>
+
+    <div class="ballot-footer">
+        <div class="verify-info">
+            <strong>選票驗證碼：</strong><br>
+            <span id="out_verifyCode"></span><br>
+            <span style="font-size: 11px; color: #444;">(格式：密碼+年月日時分+戶號)</span>
+        </div>
+        <div class="qr-code" id="out_qrcode">
+            <!-- QR Code 圖片 -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function generateBallot() {
+        // 1. 獲取輸入值
+        const house = document.getElementById('in_house').value || "未填";
+        const pwdA = document.getElementById('in_pwd').value.padStart(7, '0');
+
+        // 2. 生成時間碼 (YYYYMMDDHHmm)
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const min = String(now.getMinutes()).padStart(2, '0');
+        const timePart = `${year}${month}${day}${hour}${min}`;
+
+        // 3. 生成完整驗證碼：密碼 + 時間碼 + 戶號
+        const fullVerifyCode = pwdA + timePart + house;
+
+        // 4. 更新選票文字
+        document.getElementById('out_house').innerText = house;
+        document.getElementById('out_verifyCode').innerText = fullVerifyCode;
+
+        // 5. 處理三個議案
+        let proposalHtml = "";
+        for (let i = 1; i <= 3; i++) {
+            const title = document.getElementById(`in_p${i}_t`).value;
+            const content = document.getElementById(`in_p${i}_c`).value;
+            
+            proposalHtml += `
+                <div class="proposal-item">
+                    <div class="proposal-name">${i}. ${title}</div>
+                    <div class="proposal-content">${content}</div>
+                    <div class="vote-options">
+                        <div class="option-box">同意</div>
+                        <div class="option-box">不同意</div>
+                        <div class="stamp-hint">(請圈選同意或不同意)</div>
+                    </div>
+            `;
+
+            // 如果是議案三，增加 margin-top 讓提示往下移
+            if (i === 3) {
+                proposalHtml += `
+                    <div class="stamp-hint" style="margin-top: 15px;">(同意者請圈選以下一個金額)</div>					
+                    <div class="vote-options">				
+                        <div class="option-box">12萬元</div> 
+                    </div>
+                    <div class="vote-options">
+                        <div class="option-box">15萬元</div>
+                    </div>
+                `;
+            }
+
+            proposalHtml += `</div>`;
+        }
+
+        document.getElementById('out_proposals').innerHTML = proposalHtml;
+
+        // 6. 呼叫 QR Code API
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(fullVerifyCode)}&size=120x120`;
+        document.getElementById('out_qrcode').innerHTML = `<img src="${qrApiUrl}" alt="Verification QR">`;
+
+        // 7. 顯示選票區塊並捲動
+        document.getElementById('ballot-paper').style.display = 'block';
+        window.scrollTo({
+            top: document.getElementById('ballot-paper').offsetTop,
+            behavior: 'smooth'
+        });
+    }
+</script>
+
+</body>
+</html>
