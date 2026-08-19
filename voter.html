@@ -184,11 +184,11 @@
             <strong>議案 一</strong>
             <div class="field-row">
                 <label>案由</label>
-                <input type="text" id="in_p1_t" value="導入台電代收與大公按戶分攤之永續社區案">
+                <input type="text" id="in_p1_t" value="導入台電代收與大公按戶分攤之永續社區方案">
             </div>
             <div class="field-row">
                 <label>表決</label>
-                <textarea id="in_p1_c" rows="2">是否同意授權管委會申請台電代收大公電費？</textarea>
+                <textarea id="in_p1_c" rows="2">是否同意授權管委會申請台電代收大公電費？商店街分攤三個大公電錶(地下三層3個)</textarea>
             </div>
         </div>
         <!-- 議案2 -->
@@ -200,7 +200,9 @@
             </div>
             <div class="field-row">
                 <label>表決</label>
-                <textarea id="in_p2_c" rows="2">是否同意社區各項固定支出之合約簽訂，續約金額較前一期合約增加百分之十(含)以上者，應提經區分所有權人會議決議通過後始得簽約？</textarea>
+                <textarea id="in_p2_c" rows="2">是否同意增加管理費收支辦法之條文
+「社區各項固定支出之合約簽訂，其金額較前一期合約增加達百分之十（含）以上者，應提經區分所有權人會議決議通過後，始得簽訂之。」
+</textarea>
             </div>
         </div>
         <!-- 議案3 -->
@@ -212,7 +214,7 @@
             </div>
             <div class="field-row">
                 <label>表決</label>
-                <textarea id="in_p3_c" rows="2">是否同意調整重大修繕或改良之工程金額？</textarea>
+                <textarea id="in_p3_c" rows="2">是否同意修改社區規約第十二條重大修繕或改良之工程金額</textarea>
             </div>
         </div>
     </div>
@@ -363,7 +365,7 @@
             // 如果是議案三，增加提示與圈選選項
             if (i === 3) {
                 proposalHtml += `
-                    <div class="stamp-hint" style="margin-top: 15px;">(同意者請圈選以下一個金額)</div>					
+                    <div class="stamp-hint" style="margin-top: 15px; font-weight: bold;">(同意者請圈選以下一個金額)</div>					
                     <div class="vote-options">				
                         <div class="option-box">12萬元</div> 
                     </div>
